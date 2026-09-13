@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="sub">Apps running on skynet</p>
+  </header>
+  <main class="grid">
+    {% for card in cards %}
+    <a class="card" href="{{ card.url }}" target="_blank" rel="noopener">
+      <div class="icon">{{ card.icon }}</div>
+      <h2>{{ card.name }}</h2>
+      <p>{{ card.description }}</p>
+    </a>
+    {% endfor %}
+  </main>
+</body>
+</html>

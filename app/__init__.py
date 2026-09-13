@@ -1,0 +1,1 @@
+"""Cluster dashboard application package."""

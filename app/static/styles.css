@@ -1,0 +1,53 @@
+:root {
+  color-scheme: dark light;
+  --bg: #0f1419;
+  --card: #1a2332;
+  --text: #e7ecf3;
+  --muted: #9aa7b8;
+  --accent: #5b9fd4;
+  --radius: 14px;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --text: #15202b;
+    --muted: #5b6b7c;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 10% -10%, #1e3a5f55, transparent), var(--bg);
+  color: var(--text);
+}
+header { padding: 2.5rem 1.5rem 1rem; text-align: center; }
+h1 { margin: 0 0 0.35rem; font-size: 1.8rem; }
+.sub { margin: 0; color: var(--muted); }
+.grid {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid #ffffff14;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
+.card h2 { margin: 0 0 0.35rem; font-size: 1.1rem; }
+.card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
