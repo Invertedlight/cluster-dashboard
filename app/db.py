@@ -12,7 +12,11 @@ _SessionLocal: sessionmaker[Session] | None = None
 def get_engine() -> Engine:
     global _engine
     if _engine is None:
-        _engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+        url = get_settings().database_url
+        kwargs: dict = {"pool_pre_ping": True}
+        if url.startswith("postgresql"):
+            kwargs["connect_args"] = {"connect_timeout": 10}
+        _engine = create_engine(url, **kwargs)
     return _engine
 
 

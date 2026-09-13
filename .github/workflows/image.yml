@@ -28,7 +28,7 @@ jobs:
           images: ghcr.io/invertedlight/cluster-dashboard
           tags: |
             type=sha,prefix=
-            type=raw,value=0.1.0,enable={{is_default_branch}}
+            type=raw,value=0.1.1,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6

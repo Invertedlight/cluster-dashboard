@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,10 +11,15 @@ from app.routes.health import router as health_router
 from app.routes.home import router as home_router
 from app.routes.settings import router as settings_router
 
+log = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    bootstrap()
+    try:
+        await asyncio.wait_for(asyncio.to_thread(bootstrap), timeout=45)
+    except Exception:
+        log.exception("database bootstrap failed; serving anyway so /healthz can answer")
     yield
 
 
