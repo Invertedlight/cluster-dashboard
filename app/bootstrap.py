@@ -4,7 +4,7 @@ from alembic.config import Config
 from alembic import command
 
 from app.config import get_settings
-from app.db import get_session_factory
+from app.db import get_session_factory, qualify_database_url
 from app.seed import seed_apps
 
 log = logging.getLogger(__name__)
@@ -13,7 +13,9 @@ log = logging.getLogger(__name__)
 def run_migrations() -> None:
     cfg = Config("alembic.ini")
     # Use the raw DSN. str(engine.url) hides the password as "***".
-    cfg.set_main_option("sqlalchemy.url", get_settings().database_url)
+    cfg.set_main_option(
+        "sqlalchemy.url", qualify_database_url(get_settings().database_url)
+    )
     command.upgrade(cfg, "head")
 
 

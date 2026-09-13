@@ -42,4 +42,4 @@ pytest
 Create the database role password once, then set both:
 
 - `homelab-postgres-dashboard` (CNPG role password, namespace `database`)
-- `cluster-dashboard-database` with `uri=postgresql+psycopg://dashboard:PASSWORD@homelab-postgres-rw.database.svc.cluster.local:5432/dashboard`
+- `cluster-dashboard-database` with `uri=postgresql+psycopg://dashboard:PASSWORD@homelab-postgres-rw.database.svc.cluster.local.:5432/dashboard`
