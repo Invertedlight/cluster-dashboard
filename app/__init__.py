@@ -1,0 +1,1 @@
+"""Homelab cluster application dashboard."""

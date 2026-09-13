@@ -1,0 +1,30 @@
+# Example additions for apps/staging/database/kustomization.yaml
+#
+# resources:
+#   - ../../base/database
+#   - homelab-postgres-linkding-secret.yaml
+#   - homelab-postgres-mealie-secret.yaml
+#   - homelab-postgres-dashboard-secret.yaml
+#   - mealie-database.yaml
+#   - dashboard-database.yaml
+# patches:
+#   - target:
+#       group: postgresql.cnpg.io
+#       version: v1
+#       kind: Cluster
+#       name: homelab-postgres
+#     path: postgres-cluster-dashboard-role-patch.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: database
+resources:
+  - ../../base/database
+  - homelab-postgres-dashboard-secret.yaml
+  - dashboard-database.yaml
+patches:
+  - target:
+      group: postgresql.cnpg.io
+      version: v1
+      kind: Cluster
+      name: homelab-postgres
+    path: postgres-cluster-dashboard-role-patch.yaml

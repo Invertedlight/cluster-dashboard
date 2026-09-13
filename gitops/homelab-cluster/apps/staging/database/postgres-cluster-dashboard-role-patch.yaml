@@ -1,0 +1,11 @@
+- op: add
+  path: /spec/managed/roles/-
+  value:
+    name: dashboard
+    ensure: present
+    login: true
+    superuser: false
+    createdb: false
+    createrole: false
+    passwordSecret:
+      name: homelab-postgres-dashboard

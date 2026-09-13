@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Hidden applications</h1>
+<p>Hidden apps stay in PostgreSQL and can be restored. Auto-add blocking lands in Phase 2.</p>
+{% if hidden_apps %}
+<ul class="hidden-list">
+  {% for app in hidden_apps %}
+  <li>
+    <div>
+      <strong>{{ app.name }}</strong>
+      <span class="host">{{ app.hostname or app.url }}</span>
+    </div>
+    <form method="post" action="/apps/{{ app.id }}/unhide">
+      <button class="btn primary" type="submit">Unhide</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">No hidden applications.</p>
+{% endif %}
+{% endblock %}

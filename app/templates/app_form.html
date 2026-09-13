@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% set form = form if form is defined and form else None %}
+<form class="stack" method="post" action="{% if app %}/apps/{{ app.id }}{% else %}/apps{% endif %}">
+  <label>Name
+    <input name="name" required value="{{ form.name if form else (app.name if app else '') }}">
+  </label>
+  <label>URL
+    <input name="url" type="url" required placeholder="https://app.jameshomelab.org" value="{{ form.url if form else (app.url if app else '') }}">
+  </label>
+  <label>Description
+    <input name="description" value="{{ form.description if form else (app.description if app and app.description else '') }}">
+  </label>
+  <label>Icon URL
+    <input name="icon_url" type="url" value="{{ form.icon_url if form else (app.icon_url if app and app.icon_url else '') }}">
+  </label>
+  <label>Sort order
+    <input name="sort_order" type="number" value="{{ form.sort_order if form else (app.sort_order if app else 100) }}">
+  </label>
+  <label class="check">
+    <input type="checkbox" name="open_in_new_tab" value="true" {% if (form.open_in_new_tab if form else (app.open_in_new_tab if app else true)) %}checked{% endif %}>
+    Open in a new tab
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">Save</button>
+    <a class="btn" href="/">Cancel</a>
+  </div>
+</form>
+{% endblock %}

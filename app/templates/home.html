@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Homelab apps{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Applications</h1>
+  <p>Launchers for services on *.jameshomelab.org</p>
+</section>
+<section class="grid">
+  {% for app in apps %}
+  <article class="card">
+    <div class="card-top">
+      {% if app.icon_url %}
+      <img class="icon" src="{{ app.icon_url }}" alt="">
+      {% else %}
+      <span class="icon-fallback" aria-hidden="true">{{ app.name[:1] }}</span>
+      {% endif %}
+      <span class="badge">{{ app.source }}</span>
+    </div>
+    <h2>{{ app.name }}</h2>
+    {% if app.description %}<p class="desc">{{ app.description }}</p>{% endif %}
+    <p class="host">{{ app.hostname or app.url }}</p>
+    <div class="actions">
+      <a class="btn primary" href="{{ app.url }}" {% if app.open_in_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}>Open</a>
+      <a class="btn" href="/apps/{{ app.id }}/edit">Edit</a>
+      <form method="post" action="/apps/{{ app.id }}/hide">
+        <button class="btn" type="submit">Hide</button>
+      </form>
+      <form method="post" action="/apps/{{ app.id }}/delete" onsubmit="return confirm('Delete {{ app.name }}?');">
+        <button class="btn danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+  <a class="card add-card" href="/apps/new">
+    <span class="plus">+</span>
+    <strong>Add application</strong>
+  </a>
+</section>
+{% endblock %}

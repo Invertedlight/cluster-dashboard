@@ -1,0 +1,10 @@
+# Example apps/staging/kustomization.yaml after adding this dashboard.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - audiobookshelf
+  - cluster-dashboard
+  - database
+  - devpod
+  - linkding
+  - mealie
