@@ -24,7 +24,11 @@ def client(tmp_path: Path) -> Generator[TestClient, None, None]:
     with TestClient(app) as test_client:
         deadline = time.time() + 5
         while time.time() < deadline:
-            response = test_client.get("/")
+            try:
+                response = test_client.get("/")
+            except Exception:
+                time.sleep(0.05)
+                continue
             if response.status_code == 200 and "Linkding" in response.text:
                 break
             time.sleep(0.05)
