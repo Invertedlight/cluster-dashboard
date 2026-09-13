@@ -1,4 +1,5 @@
 import os
+import time
 from collections.abc import Generator
 from pathlib import Path
 
@@ -21,6 +22,12 @@ def client(tmp_path: Path) -> Generator[TestClient, None, None]:
     from app.main import app
 
     with TestClient(app) as test_client:
+        deadline = time.time() + 5
+        while time.time() < deadline:
+            response = test_client.get("/")
+            if response.status_code == 200 and "Linkding" in response.text:
+                break
+            time.sleep(0.05)
         yield test_client
     reset_engine()
     get_settings.cache_clear()
