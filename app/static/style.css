@@ -112,3 +112,5 @@ input {
   border-radius: 12px;
   margin-bottom: 0.6rem;
 }
+
+.desc.placeholder { font-style: italic; opacity: 0.75; }

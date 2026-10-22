@@ -59,3 +59,17 @@ def test_form_round_trip(client):
     bad = client.post(f"/apps/{app.id}", data={"name": "X", "url": "ftp://bad",
                                                "name_locked": "true"})
     assert bad.status_code == 400 and 'name="name_locked" value="true" checked' in bad.text
+
+
+def test_blank_description_shows_placeholder(client):
+    from app.db import get_session_factory
+    from app.models import Application
+    db = get_session_factory()()
+    db.add(Application(slug="blank", name="Blank Panel", url="https://blank.jameshomelab.org",
+                       hostname="blank.jameshomelab.org", description=None, source="manual",
+                       sort_order=1, hidden=False))
+    db.commit()
+    html = client.get("/").text
+    assert "No description yet" in html
+    db.refresh(db.query(Application).filter_by(slug="blank").one())
+    assert db.query(Application).filter_by(slug="blank").one().description is None

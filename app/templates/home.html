@@ -17,7 +17,7 @@
       <span class="badge">{{ app.source }}</span>
     </div>
     <h2>{{ app.name }}</h2>
-    {% if app.description %}<p class="desc">{{ app.description }}</p>{% endif %}
+    {% if app.description %}<p class="desc">{{ app.description }}</p>{% else %}<p class="desc placeholder">No description yet</p>{% endif %}
     <p class="host">{{ app.hostname or app.url }}</p>
     <div class="actions">
       <a class="btn primary" href="{{ app.url }}" {% if app.open_in_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}>Open</a>
