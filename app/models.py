@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, Uuid, false, func
+from sqlalchemy import Boolean, DateTime, Integer, LargeBinary, String, Text, Uuid, false, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -37,7 +37,26 @@ class Application(Base):
     description_locked: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=false()
     )
+    # Local icon copy (migration 003). Set only by the edit screen; discovery never touches these.
+    icon_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
+    icon_mime: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    icon_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    @property
+    def has_local_icon(self) -> bool:
+        return self.icon_mime is not None and self.icon_updated_at is not None
+
+    @property
+    def icon_version(self) -> int:
+        """Epoch seconds of the local copy; used as ?v= cache buster and ETag."""
+        ts = self.icon_updated_at
+        if ts is None:
+            return 0
+        if ts.tzinfo is None:  # SQLite drops tzinfo; values are stored as UTC
+            ts = ts.replace(tzinfo=timezone.utc)
+        return int(ts.timestamp())
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -1,11 +1,14 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.icons import MAX_ICON_BYTES, IconError, fetch_icon, validate_icon
 from app.models import Application, BlockedIdentity
 from app.routes.templates import TEMPLATES
 from app.seed import hostname_from_url, slugify, validate_app_url
@@ -139,8 +142,95 @@ def edit_app(request: Request, app_id: UUID, db: Session = Depends(get_db)):
     return TEMPLATES.TemplateResponse(
         request,
         "app_form.html",
-        {"app": app, "error": None, "title": f"Edit {app.name}"},
+        {"app": app, "error": None, "title": f"Edit {app.name}",
+         "flash": ICON_FLASH.get(request.query_params.get("flash", ""))},
     )
+
+
+ICON_FLASH = {
+    "icon-saved": "Local icon copy saved.",
+    "icon-removed": "Local icon copy removed.",
+}
+
+
+def _icon_error(request: Request, app: Application, message: str):
+    return TEMPLATES.TemplateResponse(
+        request,
+        "app_form.html",
+        {"app": app, "error": message, "title": f"Edit {app.name}"},
+        status_code=400,
+    )
+
+
+def _store_icon(app: Application, data: bytes, mime: str) -> None:
+    app.icon_data = data
+    app.icon_mime = mime
+    app.icon_updated_at = datetime.now(timezone.utc)
+
+
+@router.post("/apps/{app_id}/icon/fetch")
+def fetch_app_icon(
+    request: Request,
+    app_id: UUID,
+    db: Session = Depends(get_db),
+    icon_url: str = Form(""),
+):
+    """'Save a local copy': download the Icon URL into the database."""
+    app = _app_or_404(db, app_id)
+    url = icon_url.strip() or (app.icon_url or "")
+    try:
+        data, mime = fetch_icon(url)
+    except IconError as exc:
+        return _icon_error(request, app, f"Couldn't save a local copy: {exc}")
+    app.icon_url = url
+    _store_icon(app, data, mime)
+    return RedirectResponse(f"/apps/{app.id}/edit?flash=icon-saved", status_code=303)
+
+
+@router.post("/apps/{app_id}/icon/upload")
+async def upload_app_icon(
+    request: Request,
+    app_id: UUID,
+    db: Session = Depends(get_db),
+    icon_file: UploadFile = File(...),
+):
+    app = _app_or_404(db, app_id)
+    data = await icon_file.read(MAX_ICON_BYTES + 1)
+    try:
+        if not icon_file.filename:
+            raise IconError("Choose an image file to upload.")
+        mime = validate_icon(data, icon_file.content_type)
+    except IconError as exc:
+        return _icon_error(request, app, f"Couldn't use that file: {exc}")
+    _store_icon(app, data, mime)
+    return RedirectResponse(f"/apps/{app.id}/edit?flash=icon-saved", status_code=303)
+
+
+@router.post("/apps/{app_id}/icon/remove")
+def remove_app_icon(app_id: UUID, db: Session = Depends(get_db)):
+    app = _app_or_404(db, app_id)
+    app.icon_data = None
+    app.icon_mime = None
+    app.icon_updated_at = None
+    return RedirectResponse(f"/apps/{app.id}/edit?flash=icon-removed", status_code=303)
+
+
+@router.get("/icons/{slug}")
+def serve_icon(request: Request, slug: str, db: Session = Depends(get_db)):
+    app = db.scalar(select(Application).where(Application.slug == slug))
+    if app is None or not app.has_local_icon or app.icon_data is None:
+        raise HTTPException(status_code=404, detail="No local icon")
+    etag = f'"{app.slug}-{app.icon_version}"'
+    headers = {
+        "ETag": etag,
+        "Cache-Control": "public, max-age=86400",
+        "X-Content-Type-Options": "nosniff",
+        # Neutralises scripts in SVGs if one is opened directly.
+        "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    }
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304, headers=headers)
+    return Response(content=app.icon_data, media_type=app.icon_mime, headers=headers)
 
 
 @router.post("/apps/{app_id}")

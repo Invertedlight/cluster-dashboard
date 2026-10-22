@@ -9,7 +9,9 @@
   {% for app in apps %}
   <article class="card">
     <div class="card-top">
-      {% if app.icon_url %}
+      {% if app.has_local_icon %}
+      <img class="icon" src="/icons/{{ app.slug }}?v={{ app.icon_version }}" alt="">
+      {% elif app.icon_url %}
       <img class="icon" src="{{ app.icon_url }}" alt="">
       {% else %}
       <span class="icon-fallback" aria-hidden="true">{{ app.name[:1] }}</span>

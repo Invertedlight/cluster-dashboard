@@ -125,6 +125,7 @@ def reconcile(db: Session, ingresses: list) -> dict[str, int]:
         # An annotation wins when present; when missing, keep what the panel has
         # (e.g. text typed in the Add application form). User owns sort_order, hidden, icon.
         # "Use panel values" locks always win over annotations.
+        # Local icon copies (icon_data/icon_mime/icon_updated_at) are never read or written here.
         if not app.name_locked and (d.name_annotated or not app.name):
             app.name = d.name
         if not app.description_locked and d.description is not None:
