@@ -24,6 +24,18 @@
     <input type="checkbox" name="open_in_new_tab" value="true" {% if (form.open_in_new_tab if form else (app.open_in_new_tab if app else true)) %}checked{% endif %}>
     Open in a new tab
   </label>
+  <fieldset class="stack">
+    <legend>Use panel values</legend>
+    <p class="hint">When ticked, the dashboard keeps this panel's value even if the app's ingress has a dashboard annotation.</p>
+    <label class="check">
+      <input type="checkbox" name="name_locked" value="true" {% if (form.name_locked if form else (app.name_locked if app else false)) %}checked{% endif %}>
+      Name
+    </label>
+    <label class="check">
+      <input type="checkbox" name="description_locked" value="true" {% if (form.description_locked if form else (app.description_locked if app else false)) %}checked{% endif %}>
+      Description
+    </label>
+  </fieldset>
   <div class="actions">
     <button class="btn primary" type="submit">Save</button>
     <a class="btn" href="/">Cancel</a>

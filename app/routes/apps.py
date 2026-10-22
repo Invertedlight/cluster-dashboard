@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Application
+from app.models import Application, BlockedIdentity
 from app.routes.templates import TEMPLATES
 from app.seed import hostname_from_url, slugify, validate_app_url
 
@@ -32,6 +32,43 @@ def _unique_slug(db: Session, name: str, exclude_id: UUID | None = None) -> str:
         n += 1
 
 
+def _block(db: Session, app: Application) -> None:
+    """Hiding an auto-added app block-lists its ingress so discovery skips it."""
+    existing = db.scalar(
+        select(BlockedIdentity).where(
+            (BlockedIdentity.cluster_uid == app.cluster_uid)
+            | (
+                (BlockedIdentity.namespace == app.namespace)
+                & (BlockedIdentity.k8s_name == app.k8s_name)
+            )
+        ).limit(1)
+    )
+    if existing is None:
+        db.add(
+            BlockedIdentity(
+                cluster_uid=app.cluster_uid,
+                namespace=app.namespace,
+                k8s_name=app.k8s_name,
+                hostname=app.hostname,
+                reason="hidden from dashboard",
+            )
+        )
+
+
+def _unblock(db: Session, app: Application) -> None:
+    conds = []
+    if app.cluster_uid:
+        conds.append(BlockedIdentity.cluster_uid == app.cluster_uid)
+    if app.namespace and app.k8s_name:
+        conds.append(
+            (BlockedIdentity.namespace == app.namespace)
+            & (BlockedIdentity.k8s_name == app.k8s_name)
+        )
+    for cond in conds:
+        for row in db.scalars(select(BlockedIdentity).where(cond)).all():
+            db.delete(row)
+
+
 @router.get("/apps/new")
 def new_app(request: Request):
     return TEMPLATES.TemplateResponse(
@@ -51,6 +88,8 @@ def create_app(
     icon_url: str = Form(""),
     sort_order: int = Form(100),
     open_in_new_tab: bool = Form(False),
+    name_locked: bool = Form(False),
+    description_locked: bool = Form(False),
 ):
     try:
         url = validate_app_url(url)
@@ -69,6 +108,8 @@ def create_app(
                     "icon_url": icon_url,
                     "sort_order": sort_order,
                     "open_in_new_tab": open_in_new_tab,
+                    "name_locked": name_locked,
+                    "description_locked": description_locked,
                 },
             },
             status_code=400,
@@ -84,6 +125,8 @@ def create_app(
         hidden=False,
         sort_order=sort_order,
         open_in_new_tab=open_in_new_tab,
+        name_locked=name_locked,
+        description_locked=description_locked,
     )
     db.add(app)
     db.flush()
@@ -111,6 +154,8 @@ def update_app(
     icon_url: str = Form(""),
     sort_order: int = Form(100),
     open_in_new_tab: bool = Form(False),
+    name_locked: bool = Form(False),
+    description_locked: bool = Form(False),
 ):
     app = _app_or_404(db, app_id)
     try:
@@ -119,7 +164,21 @@ def update_app(
         return TEMPLATES.TemplateResponse(
             request,
             "app_form.html",
-            {"app": app, "error": str(exc), "title": f"Edit {app.name}"},
+            {
+                "app": app,
+                "error": str(exc),
+                "title": f"Edit {app.name}",
+                "form": {
+                    "name": name,
+                    "url": url,
+                    "description": description,
+                    "icon_url": icon_url,
+                    "sort_order": sort_order,
+                    "open_in_new_tab": open_in_new_tab,
+                    "name_locked": name_locked,
+                    "description_locked": description_locked,
+                },
+            },
             status_code=400,
         )
     app.name = name.strip()
@@ -129,6 +188,8 @@ def update_app(
     app.hostname = hostname_from_url(url)
     app.sort_order = sort_order
     app.open_in_new_tab = open_in_new_tab
+    app.name_locked = name_locked
+    app.description_locked = description_locked
     return RedirectResponse("/?flash=saved", status_code=303)
 
 
@@ -136,6 +197,8 @@ def update_app(
 def hide_app(app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     app.hidden = True
+    if app.source == "ingress" and app.namespace and app.k8s_name:
+        _block(db, app)
     return RedirectResponse("/settings?flash=hidden", status_code=303)
 
 
@@ -143,6 +206,7 @@ def hide_app(app_id: UUID, db: Session = Depends(get_db)):
 def unhide_app(app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     app.hidden = False
+    _unblock(db, app)
     return RedirectResponse("/settings?flash=shown", status_code=303)
 
 

@@ -2,7 +2,7 @@
 {% block title %}Settings{% endblock %}
 {% block content %}
 <h1>Hidden applications</h1>
-<p>Hidden apps stay in PostgreSQL and can be restored. Auto-add blocking lands in Phase 2.</p>
+<p>Hidden apps stay in PostgreSQL and can be restored. Hiding an app that was auto-added from an Ingress also block-lists it, so discovery will not bring it back; restoring it removes the block.</p>
 {% if hidden_apps %}
 <ul class="hidden-list">
   {% for app in hidden_apps %}
