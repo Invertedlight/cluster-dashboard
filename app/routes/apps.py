@@ -88,6 +88,8 @@ def create_app(
     icon_url: str = Form(""),
     sort_order: int = Form(100),
     open_in_new_tab: bool = Form(False),
+    name_locked: bool = Form(False),
+    description_locked: bool = Form(False),
 ):
     try:
         url = validate_app_url(url)
@@ -106,6 +108,8 @@ def create_app(
                     "icon_url": icon_url,
                     "sort_order": sort_order,
                     "open_in_new_tab": open_in_new_tab,
+                    "name_locked": name_locked,
+                    "description_locked": description_locked,
                 },
             },
             status_code=400,
@@ -121,6 +125,8 @@ def create_app(
         hidden=False,
         sort_order=sort_order,
         open_in_new_tab=open_in_new_tab,
+        name_locked=name_locked,
+        description_locked=description_locked,
     )
     db.add(app)
     db.flush()
@@ -148,6 +154,8 @@ def update_app(
     icon_url: str = Form(""),
     sort_order: int = Form(100),
     open_in_new_tab: bool = Form(False),
+    name_locked: bool = Form(False),
+    description_locked: bool = Form(False),
 ):
     app = _app_or_404(db, app_id)
     try:
@@ -156,7 +164,21 @@ def update_app(
         return TEMPLATES.TemplateResponse(
             request,
             "app_form.html",
-            {"app": app, "error": str(exc), "title": f"Edit {app.name}"},
+            {
+                "app": app,
+                "error": str(exc),
+                "title": f"Edit {app.name}",
+                "form": {
+                    "name": name,
+                    "url": url,
+                    "description": description,
+                    "icon_url": icon_url,
+                    "sort_order": sort_order,
+                    "open_in_new_tab": open_in_new_tab,
+                    "name_locked": name_locked,
+                    "description_locked": description_locked,
+                },
+            },
             status_code=400,
         )
     app.name = name.strip()
@@ -166,6 +188,8 @@ def update_app(
     app.hostname = hostname_from_url(url)
     app.sort_order = sort_order
     app.open_in_new_tab = open_in_new_tab
+    app.name_locked = name_locked
+    app.description_locked = description_locked
     return RedirectResponse("/?flash=saved", status_code=303)
 
 

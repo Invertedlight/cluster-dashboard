@@ -124,9 +124,10 @@ def reconcile(db: Session, ingresses: list) -> dict[str, int]:
             stats["added"] += 1
         # An annotation wins when present; when missing, keep what the panel has
         # (e.g. text typed in the Add application form). User owns sort_order, hidden, icon.
-        if d.name_annotated or not app.name:
+        # "Use panel values" locks always win over annotations.
+        if not app.name_locked and (d.name_annotated or not app.name):
             app.name = d.name
-        if d.description is not None:
+        if not app.description_locked and d.description is not None:
             app.description = d.description
         if d.icon_url and not app.icon_url:
             app.icon_url = d.icon_url

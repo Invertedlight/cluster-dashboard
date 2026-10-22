@@ -61,6 +61,7 @@ Rules:
 - Panels are keyed by Ingress `metadata.uid` (`uid:host` when one Ingress has several hosts).
 - An existing panel with the same hostname (e.g. added by hand) is adopted, not duplicated.
 - A name or description annotation, when present, overwrites the panel's text; when missing, the panel keeps its existing text (e.g. typed in the Add application form). Your sort order, hidden flag and any icon you set are always kept.
+- **Use panel values**: the edit/add form has two checkboxes, *Name* and *Description*. When ticked, discovery never changes that field, even if the Ingress has an annotation, so wording changes are a dashboard edit only (no Git push).
 - Panels are never deleted when an Ingress disappears.
 - Hiding an auto-added panel block-lists its Ingress; restoring it removes the block.
 
