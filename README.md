@@ -60,7 +60,7 @@ Ingress annotations:
 Rules:
 - Panels are keyed by Ingress `metadata.uid` (`uid:host` when one Ingress has several hosts).
 - An existing panel with the same hostname (e.g. added by hand) is adopted, not duplicated.
-- Annotations update name and description; your sort order, hidden flag and any icon you set are kept.
+- A name or description annotation, when present, overwrites the panel's text; when missing, the panel keeps its existing text (e.g. typed in the Add application form). Your sort order, hidden flag and any icon you set are always kept.
 - Panels are never deleted when an Ingress disappears.
 - Hiding an auto-added panel block-lists its Ingress; restoring it removes the block.
 

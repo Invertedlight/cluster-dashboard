@@ -31,7 +31,8 @@ class DiscoveredHost:
     namespace: str
     k8s_name: str
     hostname: str
-    name: str
+    name: str  # annotation name, or the ingress name as a fallback for new panels
+    name_annotated: bool
     description: str | None
     icon_url: str | None
 
@@ -64,7 +65,8 @@ def extract_hosts(ingresses: list, base_domain: str) -> list[DiscoveredHost]:
                     namespace=meta.namespace,
                     k8s_name=meta.name,
                     hostname=host,
-                    name=(ann.get(PREFIX + "name") or meta.name).strip(),
+                    name=(ann.get(PREFIX + "name") or "").strip() or meta.name,
+                    name_annotated=bool((ann.get(PREFIX + "name") or "").strip()),
                     description=(ann.get(PREFIX + "description") or "").strip() or None,
                     icon_url=(ann.get(PREFIX + "icon") or "").strip() or None,
                 )
@@ -120,9 +122,12 @@ def reconcile(db: Session, ingresses: list) -> dict[str, int]:
             )
             db.add(app)
             stats["added"] += 1
-        # Annotations own name/description; user owns sort_order, hidden, icon.
-        app.name = d.name
-        app.description = d.description
+        # An annotation wins when present; when missing, keep what the panel has
+        # (e.g. text typed in the Add application form). User owns sort_order, hidden, icon.
+        if d.name_annotated or not app.name:
+            app.name = d.name
+        if d.description is not None:
+            app.description = d.description
         if d.icon_url and not app.icon_url:
             app.icon_url = d.icon_url
         app.url = f"https://{d.hostname}"

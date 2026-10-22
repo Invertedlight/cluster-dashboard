@@ -95,3 +95,18 @@ def test_disabled_outside_cluster(monkeypatch):
     assert discovery.discovery_enabled() is False
     monkeypatch.setenv("DISCOVERY_ENABLED", "false")
     assert discovery.discovery_enabled() is False
+
+
+def test_missing_annotations_keep_manual_text(client):
+    db = session()
+    db.add(Application(slug="mine", name="My Panel", url="https://keep.jameshomelab.org",
+                       hostname="keep.jameshomelab.org", description="Typed by hand",
+                       source="manual", sort_order=7, hidden=False))
+    db.commit()
+    discovery.reconcile(db, [ing("uk", "keep", "keep", ["keep.jameshomelab.org"])])
+    [app] = by_host(db, "keep.jameshomelab.org")
+    assert app.cluster_uid == "uk"
+    assert (app.name, app.description) == ("My Panel", "Typed by hand")
+    discovery.reconcile(db, [ing("uk", "keep", "keep", ["keep.jameshomelab.org"], name="From Ingress", description="Annotated")])
+    db.refresh(app)
+    assert (app.name, app.description) == ("From Ingress", "Annotated")
