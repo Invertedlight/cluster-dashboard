@@ -12,6 +12,7 @@
       <span class="host">{{ app.hostname or app.url }}</span>
     </div>
     <form method="post" action="/apps/{{ app.id }}/unhide">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
       <button class="btn primary" type="submit">Unhide</button>
     </form>
   </li>

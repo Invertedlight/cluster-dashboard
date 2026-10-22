@@ -14,6 +14,7 @@ FLASH = {
     "deleted": "Application deleted.",
     "hidden": "Application hidden.",
     "shown": "Application is visible again.",
+    "signed-out": "Signed out.",
 }
 
 

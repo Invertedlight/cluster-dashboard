@@ -66,3 +66,26 @@ Rules:
 - Hiding an auto-added panel block-lists its Ingress; restoring it removes the block.
 
 Required RBAC: a ServiceAccount bound to a ClusterRole allowing `get`, `list`, `watch` on `ingresses` in API group `networking.k8s.io` (cluster-wide), and the Deployment using that ServiceAccount.
+
+## Edit login (0.4.0)
+
+The home page, `/icons/*`, `/static/*`, `/healthz` and `/readyz` are public. Everything that
+changes data (and the Add, Edit and Settings pages) needs a sign-in: password + 6-digit
+authenticator (TOTP) code. Session cookie is signed, `Secure`, `HttpOnly`, `SameSite=Lax`, 12 h.
+Every form carries a CSRF token. 5 failed sign-ins in 15 min locks that IP out for 15 min
+(in memory, resets on restart).
+
+Env vars (from the `cluster-dashboard-auth` Secret): `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`,
+`SESSION_SECRET`, `TOTP_SECRET`. If any is missing, editing is disabled and a warning is logged.
+Optional: `SESSION_MAX_AGE` (43200), `SESSION_COOKIE_SECURE` (true),
+`TRUSTED_PROXIES` (`10.42.0.0/16,127.0.0.1/32`; only these peers may set
+`CF-Connecting-IP` / `X-Forwarded-For`).
+
+Make the values on your Mac (zsh):
+
+```zsh
+cd ~/src/cluster-dashboard   # wherever the repo is
+python3 -m venv /tmp/dash-auth && /tmp/dash-auth/bin/python -m pip install bcrypt pyotp qrcode
+/tmp/dash-auth/bin/python scripts/make_auth_secret.py --user james --verify
+rm -rf /tmp/dash-auth
+```

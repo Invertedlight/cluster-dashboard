@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import require_admin
 from app.db import get_db
 from app.models import Application
 from app.routes.templates import TEMPLATES
@@ -14,7 +15,7 @@ FLASH = {
 }
 
 
-@router.get("/settings")
+@router.get("/settings", dependencies=[Depends(require_admin)])
 def settings(request: Request, db: Session = Depends(get_db)):
     hidden = db.scalars(
         select(Application).where(Application.hidden.is_(True)).order_by(Application.name)
