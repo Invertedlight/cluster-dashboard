@@ -114,3 +114,7 @@ input {
 }
 
 .desc.placeholder { font-style: italic; opacity: 0.75; }
+
+/* 0.4.0 sign out button in the nav */
+nav form.inline { display: inline; margin: 0; }
+nav .linklike { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }

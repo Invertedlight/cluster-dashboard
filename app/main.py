@@ -5,8 +5,14 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+import secrets
+
+from starlette.middleware.sessions import SessionMiddleware
 
 from app import discovery
+from app.auth import warn_if_unconfigured
+from app.config import get_settings
+from app.routes.auth import router as auth_router
 from app.bootstrap import bootstrap
 from app.routes.apps import router as apps_router
 from app.routes.health import router as health_router
@@ -30,6 +36,7 @@ async def _run_bootstrap(stop: threading.Event) -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    warn_if_unconfigured()
     stop = threading.Event()
     task = asyncio.create_task(_run_bootstrap(stop))
     yield
@@ -40,8 +47,19 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Homelab dashboard", lifespan=lifespan)
+_settings = get_settings()
+app.add_middleware(
+    SessionMiddleware,
+    # Without SESSION_SECRET editing is disabled anyway; a random key keeps sessions inert.
+    secret_key=_settings.session_secret or secrets.token_hex(32),
+    session_cookie="dash_session",
+    max_age=_settings.session_max_age,
+    same_site="lax",
+    https_only=_settings.session_cookie_secure,
+)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(home_router)
 app.include_router(apps_router)
 app.include_router(settings_router)

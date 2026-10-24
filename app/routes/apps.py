@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import require_admin
 from app.db import get_db
 from app.icons import MAX_ICON_BYTES, IconError, fetch_icon, validate_icon
 from app.models import Application, BlockedIdentity
@@ -72,7 +73,7 @@ def _unblock(db: Session, app: Application) -> None:
             db.delete(row)
 
 
-@router.get("/apps/new")
+@router.get("/apps/new", dependencies=[Depends(require_admin)])
 def new_app(request: Request):
     return TEMPLATES.TemplateResponse(
         request,
@@ -81,7 +82,7 @@ def new_app(request: Request):
     )
 
 
-@router.post("/apps")
+@router.post("/apps", dependencies=[Depends(require_admin)])
 def create_app(
     request: Request,
     db: Session = Depends(get_db),
@@ -136,7 +137,7 @@ def create_app(
     return RedirectResponse("/?flash=added", status_code=303)
 
 
-@router.get("/apps/{app_id}/edit")
+@router.get("/apps/{app_id}/edit", dependencies=[Depends(require_admin)])
 def edit_app(request: Request, app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     return TEMPLATES.TemplateResponse(
@@ -168,7 +169,7 @@ def _store_icon(app: Application, data: bytes, mime: str) -> None:
     app.icon_updated_at = datetime.now(timezone.utc)
 
 
-@router.post("/apps/{app_id}/icon/fetch")
+@router.post("/apps/{app_id}/icon/fetch", dependencies=[Depends(require_admin)])
 def fetch_app_icon(
     request: Request,
     app_id: UUID,
@@ -187,7 +188,7 @@ def fetch_app_icon(
     return RedirectResponse(f"/apps/{app.id}/edit?flash=icon-saved", status_code=303)
 
 
-@router.post("/apps/{app_id}/icon/upload")
+@router.post("/apps/{app_id}/icon/upload", dependencies=[Depends(require_admin)])
 async def upload_app_icon(
     request: Request,
     app_id: UUID,
@@ -206,7 +207,7 @@ async def upload_app_icon(
     return RedirectResponse(f"/apps/{app.id}/edit?flash=icon-saved", status_code=303)
 
 
-@router.post("/apps/{app_id}/icon/remove")
+@router.post("/apps/{app_id}/icon/remove", dependencies=[Depends(require_admin)])
 def remove_app_icon(app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     app.icon_data = None
@@ -233,7 +234,7 @@ def serve_icon(request: Request, slug: str, db: Session = Depends(get_db)):
     return Response(content=app.icon_data, media_type=app.icon_mime, headers=headers)
 
 
-@router.post("/apps/{app_id}")
+@router.post("/apps/{app_id}", dependencies=[Depends(require_admin)])
 def update_app(
     request: Request,
     app_id: UUID,
@@ -283,7 +284,7 @@ def update_app(
     return RedirectResponse("/?flash=saved", status_code=303)
 
 
-@router.post("/apps/{app_id}/hide")
+@router.post("/apps/{app_id}/hide", dependencies=[Depends(require_admin)])
 def hide_app(app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     app.hidden = True
@@ -292,7 +293,7 @@ def hide_app(app_id: UUID, db: Session = Depends(get_db)):
     return RedirectResponse("/settings?flash=hidden", status_code=303)
 
 
-@router.post("/apps/{app_id}/unhide")
+@router.post("/apps/{app_id}/unhide", dependencies=[Depends(require_admin)])
 def unhide_app(app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     app.hidden = False
@@ -300,7 +301,7 @@ def unhide_app(app_id: UUID, db: Session = Depends(get_db)):
     return RedirectResponse("/settings?flash=shown", status_code=303)
 
 
-@router.post("/apps/{app_id}/delete")
+@router.post("/apps/{app_id}/delete", dependencies=[Depends(require_admin)])
 def delete_app(app_id: UUID, db: Session = Depends(get_db)):
     app = _app_or_404(db, app_id)
     db.delete(app)

@@ -11,8 +11,16 @@
     <a class="brand" href="/">jameshomelab</a>
     <nav>
       <a href="/">Apps</a>
+      {% if is_admin(request) %}
       <a href="/apps/new">Add</a>
       <a href="/settings">Settings</a>
+      <form class="inline" method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+        <button class="linklike" type="submit">Sign out</button>
+      </form>
+      {% else %}
+      <a href="/login">Sign in</a>
+      {% endif %}
     </nav>
   </header>
   <main>

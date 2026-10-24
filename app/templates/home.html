@@ -23,19 +23,25 @@
     <p class="host">{{ app.hostname or app.url }}</p>
     <div class="actions">
       <a class="btn primary" href="{{ app.url }}" {% if app.open_in_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}>Open</a>
+      {% if is_admin(request) %}
       <a class="btn" href="/apps/{{ app.id }}/edit">Edit</a>
       <form method="post" action="/apps/{{ app.id }}/hide">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
         <button class="btn" type="submit">Hide</button>
       </form>
       <form method="post" action="/apps/{{ app.id }}/delete" onsubmit="return confirm('Delete {{ app.name }}?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
         <button class="btn danger" type="submit">Delete</button>
       </form>
+      {% endif %}
     </div>
   </article>
   {% endfor %}
+  {% if is_admin(request) %}
   <a class="card add-card" href="/apps/new">
     <span class="plus">+</span>
     <strong>Add application</strong>
   </a>
+  {% endif %}
 </section>
 {% endblock %}
